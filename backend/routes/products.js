@@ -4,6 +4,11 @@ const router = Router();
 const MongoClient = mongodb.MongoClient;
 
 const Decimal128 = mongodb.Decimal128;
+
+
+
+
+
 const products = [
   {
     _id: 'fasdlk1j',
@@ -57,16 +62,38 @@ const products = [
 router.get('/', (req, res, next) => {
   // Return a list of dummy products
   // Later, this data will be fetched from MongoDB
-  const queryPage = req.query.page;
-  const pageSize = 5;
-  let resultProducts = [...products];
-  if (queryPage) {
-    resultProducts = products.slice(
-      (queryPage - 1) * pageSize,
-      queryPage * pageSize
-    );
-  }
-  res.json(resultProducts);
+  // const queryPage = req.query.page;
+  // const pageSize = 5;
+  // let resultProducts = [...products];
+  // if (queryPage) {
+  //   resultProducts = products.slice(
+  //     (queryPage - 1) * pageSize,
+  //     queryPage * pageSize
+  //   );
+  // }
+  const client = new MongoClient('mongodb://localhost:27017');
+  client.connect().then(client=> {    
+    let products=[];
+    console.log("Connected correctly to server");
+    client
+    .db('shop')
+    .collection('products')
+    .find().forEach(productData=>{
+      
+      productData.price=productData.price.toString();
+      products.push(productData);
+    })
+    .then(result=>{    
+      client.close();
+      res.status(201).json(products);
+    })
+  }).catch(err=>{
+    console.log(err);
+    res.status(500).json({ message: 'An Error occured!!!!'});
+    client.close();
+  });
+
+  
 });
 
 // Get single product
@@ -84,14 +111,12 @@ router.post('', (req, res, next) => {
     price: Decimal128.fromString(req.body.price.toString()), // store this as 128bit decimal in MongoDB
     image: req.body.image
   };
-  const url = 'mongodb://localhost:27017';
-  const dbName = 'shop';
-  const client = new MongoClient(url);
-  // Use connect method to connect to the Server
+  const client = new MongoClient('mongodb://localhost:27017');
   client.connect().then(client=> {    
     console.log("Connected correctly to server");
-    const db = client.db(dbName);
-    db.collection('products').insertOne(newProduct, function (err, result) {
+    client
+    .db('shop')
+    .collection('products').insertOne(newProduct, function (err, result) {
       console.log(result);
       res.status(201).json({ message: 'Product added', productId: result.insertedId });
       client.close();
