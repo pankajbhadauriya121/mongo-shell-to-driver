@@ -92,7 +92,7 @@ class ProductEditPage extends Component {
         />
         <Input
           label="Price"
-          config={{ type: 'number', value: this.state.price }}
+          config={{ type: 'decimal', value: this.state.price }}
           onChange={event => this.inputChangeHandler(event, 'price')}
         />
         <Input
